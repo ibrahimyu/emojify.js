@@ -1,65 +1,178 @@
-emojify.js v0.9.1 [![Build Status](https://travis-ci.org/hassankhan/emojify.js.png)](https://travis-ci.org/hassankhan/emojify.js) [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/hassankhan/emojify.js/trend.png)](https://bitdeli.com/free "Bitdeli Badge") [![Gitter chat](https://badges.gitter.im/hassankhan/emojify.js.png)](https://gitter.im/hassankhan/emojify.js)
-==========
+# emojify.js
+
+[![npm version][ico-npm]][package-npm]
+[![Bower version][ico-bower]][package-bower]
+[![MIT Licensed][ico-license]][license]
+[![Gitter chat][ico-gitter]][gitter]
+
+---
+
+Master | Develop
+--- | ---
+[![Master branch build status][ico-build]][travis] | [![Develop branch build status][ico-build-dev]][travis]
+[![Master branch Windows build status][ico-windows-build]][appveyor] | [![Develop branch Windows build status][ico-windows-build-dev]][appveyor]
 
 [![Browser Results](https://ci.testling.com/hassankhan/emojify.js.png)](https://ci.testling.com/hassankhan/emojify.js)
 
-<a href="http://bower.io/search/?q=emojify.js"><img src="http://benschwarz.github.io/bower-badges/badge@2x.png" width="130" height="30"></a>
-
-A Javascript module to convert emoji keywords to images. Used by [Gitter](https://gitter.im/)
+A swiss-army-knife for all emoji, in Javascript. Used by [Gitter](https://gitter.im/) and [Mapbox](https://www.mapbox.com/blog/emoji-map-markers/).
 
 The emoji keywords are as described by [emoji-cheat-sheet.com](http://www.emoji-cheat-sheet.com).
 
-Go to this project's [GitHub pages](http://hassankhan.github.com/emojify.js) to see the module in action.
+Go to this project's [GitHub pages](http://hassankhan.github.com/emojify.js) to see the code in action.
+
+## Features
+
+- Fast
+- Awesome
+- Converts emoticons like `:) :( :'(`
+- Allows customisation of processed emoji
+- Multiple modes; `img`, sprites and data-URI
+- Available on a CDN **(gasp)**
+- Includes a [sample `.htaccess` file](.htaccess) for caching Javascript and CSS
+- Switchable emoji sets **(SOON!)**
+- Made from unicorn blood
+
+## Installation
+
+Care about old browsers compatibility? Use https://github.com/es-shims/es5-shim
+
+### Via cdnjs
+
+emojify.js is now available on cdnjs - https://cdnjs.com/libraries/emojify.js
+
+Add this to the rest of your stylesheet imports:
+
+`<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/emojify.js/1.0.1/emojify.min.css" />`
+
+Then add this to your Javascript code:
+
+`<script src="//cdnjs.cloudflare.com/ajax/libs/emojify.js/1.0.1/emojify.min.js"></script>`
+
+### Via Bower
+
+`bower install emojify.js --save`
+
+### Via npm
+
+`npm install emojify.js  --save`
+
+## API
+
+### setConfig([object])
+
+*This works in the browser and on Node*
+
+#### Parameters
+
+- `object` - Optional JSON object with any of the following attributes:
+
+Option | Default | Description
+--- | --- | ---
+`blacklist.elements` | `['script', 'textarea', 'a', 'pre', 'code']` | An array of elements you don't want emojified
+`blacklist.classes` | `['no-emojify']` | An array of classes you don't want emojified
+`mode` | `img` | By default, emojify will output an `img` with a `src` attribute for each emoji found. But if `mode` is set to `sprite` or `data-uri`, then `span`s with classes are outputted. Don't forget to include the appropriate CSS for your choice though, see the `/dist` directory.
+`tag_type` | `null` | When set, emojify uses this element with the class `emoji emoji-#{emojiname}` instead of an `img` with a `src` attribute.  Example valid values: `div`, `span`. This takes precedence over the `mode` option. Note: if you're not using `img`s, `.emoji-+1` isn't a valid class, so `.emoji-plus1` is used instead.
+`only_crawl_id` | `null` | **[DEPRECATED]** Restricts searching for emojis to a specified element & it's children. If null, and no object is passed to `run()`, `document.body` is used
+`img_dir` | `'images/emoji'` | Defines the path to the emoji images
+`ignore_emoticons` | `false` | If `true`, only convert emoji like `:smile:` and ignore emoticons like `:)`
+
+#### Usage
+```js
+emojify.setConfig({tag_type : 'div'});
+```
+
+---
+
+### run([element], [replacer])
+
+*This works in the browser and Node*
+
+#### Parameters
+- `element` - Optional HTML element to restrict the emojification to.
+- `replacer` - Optional Function to override emoji replacement behaviour with your own. The function will receive two arguments, the emoji pattern found (`emoji`), and the emoji name (`name`). In the case of emoticons, for example, `emoji = ':)'` and `name = 'smile'`. Your function must return a HTMLElement.
 
 
-## Rationale
-I wanted [my blog](http://hassankhan.me) to display smileys nicely, decided to use Emojis because they look nice. [GitterHQ](https://github.com/gitterHQ) wanted to use it in [Gitter](https://gitter.im/), so they very kindly rewrote it and here we are.
+##### Browser
+```js
+emojify.run();
+// OR
+emojify.run(document.getElementById('my-element'))
+// OR
+emojify.run(null, function(emoji, emojiName){
+  var span = document.createElement('span');
+  span.className = 'emoji emoji-'  + emojiName;
+  span.innerHTML = emoji + ' replaced';
+  return span;
+});
+```
 
+##### Node.js
+Requires you to have jsdom installed:
+`npm i jsdom --save`
 
-## Usage
-Add the following line to your HTML:
+```js
+var jsdom = require('jsdom')
 
-    <script src="emojify.js"></script>
+jsdom.env({
+    html: "<p><code>jhhh</code><em>:)</em></p>",
+    done: function(errors, window) {
+        emojify.run(window.document.body)
+    }
+});
+```
+---
 
-Now type in an emoji keyword in your HTML, for example ``:smile:``
-Now run emojify using ``emojify.run()``.
-To exclude tags from being emojified, add ``no-emojify`` to their ``class`` attributes.
+### replace(string, [callback])
 
-You can optionally pass an object to ``emojify.run()`` to restrict the **emojification** to that object only: ``emojify.run(document.getElementById('my-element'))``
+*This works in the browser and on Node*
 
-### Configuration
-To set configuration options, use `emojify.setConfig()` and a JSON object as a parameter with the following attributes:
-* ``emojify_tag_type``: Set to `<div>` by default. Sets the element the emojify.js uses to replace emoji keywords
-* ``emoticons_enabled``: Set to `true` by default. Enables detection of emoticon keywords.
-* ``people_enabled``: Set to `false` by default. Enables detection of emoji people keywords.
-* ``nature_enabled``: Set to `false` by default. Enables detection of emoji nature keywords.
-* ``objects_enabled``: Set to `false` by default. Enables detection of emoji objects keywords.
-* ``places_enabled``: Set to `false` by default. Enables detection of emoji places keywords.
-* ``symbols_enabled``: Set to `false` by default. Enables detection of emoji symbols keywords.
-* ``only_crawl_id``: Set to `null` by default. Restricts searching for emojis to a specified element & it's children.  If null, and no object is passed to run(), `document.body` is used.
+#### Parameters
+- `string` - String to emojify
+- `callback` - Optional callback function to output emoji with
 
-### Code Example
+#### Usage
 
-    emojify.setConfig({
+By default, emojify.js uses the internal function `defaultReplacer()` to replace emoji. You can override this behaviour by supplying your own callback function.
 
-        emojify_tag_type : 'div',           // Only run emojify.js on this element
-        only_crawl_id    : null,            // Use to restrict where emojify.js applies
-        img_dir          : 'images/emoji',  // Directory for emoji images
-        ignored_tags     : {                // Ignore the following tags
-            'SCRIPT'  : 1,
-            'TEXTAREA': 1,
-            'A'       : 1,
-            'PRE'     : 1,
-            'CODE'    : 1
-        }
-    });
-    emojify.run();
+Your callback function will receive two arguments, the emoji pattern found (`emoji`), and the emoji name (`name`). In the case of emoticons, for example, `emoji = ':)'` and `name = 'smile'`.
 
-## Updating the emoji
-From time to time, the emoji at [emoji-cheat-sheet.com](http://www.emoji-cheat-sheet.com) will be updated. Running the
-`update.sh` script will update the project with the latest emoji. Don't forget to run grunt after running the update script.
+The context in which your replacer function is run will have the config available. So you can access properties such as `img_dir` at `this.config.img_dir`.
+
+```js
+emojify.replace('I am happy :)');
+// OR
+replacer = function(emoji, name) {
+    // Customise output here
+    return emojifiedString;
+}
+
+emojify.replace('I am happy :)', replacer);
+```
+
+## Contributing changes
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Credits
+
+- [All Contributors](https://github.com/hassankhan/emojify.js/contributors)
+- [Hassan Khan](https://github.com/hassankhan)
 
 ## License
-Copyright 2014 Hassan Khan
 
-Licensed under the MIT License
+Please read [LICENSE.md](LICENSE.md). For image attributions, please read [LICENSE-IMAGES.md](LICENSE-IMAGES.md)
+
+[travis]: https://travis-ci.org/hassankhan/emojify.js
+[appveyor]: https://ci.appveyor.com/project/hassankhan/emojify-js
+[package-bower]: http://bower.io/search/?q=emojify.js
+[package-npm]: https://www.npmjs.org/package/emojify.js
+[ico-build]: http://img.shields.io/travis/hassankhan/emojify.js.svg?style=flat-square
+[ico-build-dev]: http://img.shields.io/travis/hassankhan/emojify.js/develop.svg?style=flat-square
+[ico-windows-build]: https://ci.appveyor.com/api/projects/status/908bymld8nm3ykxm?svg=true
+[ico-windows-build-dev]: https://ci.appveyor.com/api/projects/status/908bymld8nm3ykxm/branch/develop?svg=true
+[ico-bower]: http://img.shields.io/bower/v/emojify.js.svg?style=flat-square
+[ico-npm]: http://img.shields.io/npm/v/emojify.js.svg?style=flat-square
+[ico-license]: http://img.shields.io/npm/l/emojify.js.svg?style=flat-square
+[ico-gitter]: https://badges.gitter.im/hassankhan/emojify.js.svg
+[license]: http://hassankhan.mit-license.org/
+[gitter]: https://gitter.im/hassankhan/emojify.js
